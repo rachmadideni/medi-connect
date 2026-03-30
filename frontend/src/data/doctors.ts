@@ -1,14 +1,16 @@
 // TODO: replace with real data from backend API
-import drWomen1 from "../images/dr-women-1.png";
-import ellipse5  from "../images/Ellipse 5.png";
-import ellipse6  from "../images/Ellipse 6.png";
-import ellipse7  from "../images/Ellipse 7.png";
-import ellipse8  from "../images/Ellipse 8.png";
-import ellipse9  from "../images/Ellipse 9.png";
-import ellipse10 from "../images/Ellipse 10.png";
-import ellipse11 from "../images/Ellipse 11.png";
-import ellipse12 from "../images/Ellipse 12.png";
-import ellipse13 from "../images/Ellipse 13.png";
+// import drWomen1 from "../images/dr-women-1.png";
+// import ellipse5  from "../images/Ellipse 5.png";
+import drSarahMitchell from "../images/dr-sarah-mitchell.png";
+import drOmarAlRashid from "../images/dr-omar-al-rashid.png";
+import drOmaraOsei from "../images/dr-amara-osei.png";
+import ellipse7 from "../images/dr-brandon-hayes.png";
+import ellipse8 from "../images/dr-carlos-reyes.png";
+import ellipse9 from "../images/dr-arjun-patel.png";
+import ellipse10 from "../images/dr-ashley-carter.png";
+import ellipse11 from "../images/dr-marcus-webb.png";
+import ellipse12 from "../images/dr-henry-blackwood.png";
+import ellipse13 from "../images/dr-dariush-tehrani.png";
 
 export type Doctor = {
   id: number;
@@ -30,21 +32,21 @@ export type Doctor = {
 export const MOCK_DOCTORS: Doctor[] = [
   {
     id: 1, name: "Dr. Sarah Mitchell", specialty: "Cardiologist", location: "New York, NY",
-    rating: 4.9, reviews: 214, available: "Today", experience: 14, avatar: "SM", image: drWomen1,
+    rating: 4.9, reviews: 214, available: "Today", experience: 14, avatar: "SM", image: drSarahMitchell,
     bio: "Dr. Mitchell is a board-certified cardiologist with over 14 years of experience in diagnosing and treating complex heart conditions. She specializes in preventive cardiology and minimally invasive procedures.",
     languages: ["English", "Spanish"], education: "Harvard Medical School",
     slots: ["9:00 AM", "10:30 AM", "1:00 PM", "3:30 PM"],
   },
   {
     id: 2, name: "Dr. Omar Al-Rashid", specialty: "General Practice", location: "Los Angeles, CA",
-    rating: 4.7, reviews: 189, available: "Tomorrow", experience: 8, avatar: "OA", image: ellipse5,
+    rating: 4.7, reviews: 189, available: "Tomorrow", experience: 8, avatar: "OA", image: drOmarAlRashid,
     bio: "Dr. Al-Rashid is a compassionate family doctor who provides comprehensive primary care for patients of all ages. He emphasizes preventive medicine and long-term patient relationships.",
     languages: ["English", "Arabic"], education: "UCLA School of Medicine",
     slots: ["8:00 AM", "11:00 AM", "2:00 PM"],
   },
   {
     id: 3, name: "Dr. Amara Osei", specialty: "Dermatologist", location: "Chicago, IL",
-    rating: 4.8, reviews: 302, available: "Today", experience: 11, avatar: "AO", image: ellipse6,
+    rating: 4.8, reviews: 302, available: "Today", experience: 11, avatar: "AO", image: drOmaraOsei,
     bio: "Dr. Osei is a leading dermatologist specializing in both medical and cosmetic skin conditions. She is known for her expertise in treating skin cancer, eczema, and acne.",
     languages: ["English", "French", "Twi"], education: "Johns Hopkins School of Medicine",
     slots: ["9:30 AM", "12:00 PM", "2:30 PM", "4:00 PM"],

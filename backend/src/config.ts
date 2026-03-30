@@ -10,8 +10,9 @@ function required(name: string): string {
 
 export const config = {
   port: Number(process.env.PORT ?? 8080),
-  geminiApiKey: required("GEMINI_API_KEY"),
   databaseUrl: required("DATABASE_URL"),
-  gcsBucketName: required("GCS_BUCKET_NAME"),
-  corsOrigin: process.env.CORS_ORIGIN ?? "*"
+  googleClientId: required("GOOGLE_CLIENT_ID"),
+  corsOrigin: process.env.CORS_ORIGIN ?? "*",
+  // optional — only needed for image uploads
+  gcsBucketName: process.env.GCS_BUCKET_NAME ?? "",
 };
