@@ -36,35 +36,46 @@ router.get("/", async (req, res) => {
     }
 
     const { rows } = await pool.query(
-      `SELECT
-         d.id, d.name, d.specialty, d.location, d.rating, d.reviews,
-         d.available, d.experience, d.avatar, d.image_url, d.bio,
-         d.languages, d.education,
-         ROUND(
-           (1 - (d.search_embedding <=> embedding('text-embedding-005', $1)::vector))::numeric,
-           4
-         ) AS similarity,
-         COALESCE(
-           json_agg(
-             json_build_object(
-               'id', s.id,
-               'slotTime', s.slot_time,
-               'isAvailable', s.is_available
-             )
-           ) FILTER (WHERE s.id IS NOT NULL),
-           '[]'
-         ) AS slots
-       FROM doctors d
-       LEFT JOIN doctor_slots s ON s.doctor_id = d.id AND s.is_available = true
-       WHERE d.search_embedding IS NOT NULL
-          AND ai.if(
-            prompt => 'Does this text: "' || d.name || '. ' || d.specialty || ' at ' || d.location || '. ' || d.bio || '. Languages: ' || array_to_string(d.languages, ', ') || '" match the user request: "' || $1 || '", at least 50%? ',
-            model_id => 'gemini-3-flash-preview'
-          )
-          AND (1 - (d.search_embedding <=> embedding('text-embedding-005', $1)::vector)) > 0.5
-       GROUP BY d.id, d.search_embedding
-       ORDER BY d.search_embedding <=> embedding('text-embedding-005', $1)::vector
-       LIMIT 20`,
+      `WITH query_vec AS (
+  SELECT embedding('text-embedding-005', $1)::vector AS vec
+),
+top_candidates AS (
+  SELECT
+    d.*,
+    1 - (d.search_embedding <=> q.vec) AS similarity
+  FROM doctors d, query_vec q
+  WHERE d.search_embedding IS NOT NULL
+  ORDER BY d.search_embedding <=> q.vec
+  LIMIT 30
+)
+SELECT
+  t.id, t.name, t.specialty, t.location, t.rating, t.reviews,
+  t.available, t.experience, t.avatar, t.image_url, t.bio,
+  t.languages, t.education,
+  ROUND(t.similarity::numeric, 4) AS similarity,
+  COALESCE(
+    json_agg(
+      json_build_object(
+        'id', s.id,
+        'slotTime', s.slot_time,
+        'isAvailable', s.is_available
+      ) ORDER BY s.slot_time
+    ) FILTER (WHERE s.id IS NOT NULL),
+    '[]'
+  ) AS slots
+FROM top_candidates t
+LEFT JOIN doctor_slots s ON s.doctor_id = t.id AND s.is_available = true
+WHERE ai.if(
+  prompt => 'Does this text: \"' || t.name || '. ' || t.specialty || ' at ' || t.location || '. ' || t.bio || '. Languages: ' || array_to_string(t.languages, ', ') || '\" match the user request: \"' || $1 || '\", at least 50%? ',
+  model_id => 'gemini-3-flash-preview'
+)
+AND t.similarity > 0.5
+GROUP BY
+  t.id, t.name, t.specialty, t.location, t.rating, t.reviews,
+  t.available, t.experience, t.avatar, t.image_url, t.bio,
+  t.languages, t.education, t.similarity
+ORDER BY t.similarity DESC
+LIMIT 20`,
       [q]
     );
     // Post-filter for specialty/availability if present in query
