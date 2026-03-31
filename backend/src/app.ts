@@ -37,6 +37,7 @@ app.use((_req, res) => {
   res.status(404).json({ error: "Not found" });
 });
 
-app.listen(config.port, '0.0.0.0', () => {
-  console.log(`Medi Connect backend running on port ${config.port}`);
+const port = typeof config.port === "string" ? Number(config.port) : config.port;
+app.listen(port, () => {
+  console.log(`Medi Connect backend running on port ${port}`);
 });
