@@ -14,6 +14,27 @@ router.get("/", async (req, res) => {
   }
 
   try {
+    // Hybrid filter: extract specialty/availability from query
+    const specialties = [
+      "Cardiologist", "General Practice", "Dermatologist", "Pediatrician",
+      "Neurologist", "Psychiatrist", "Orthopedic", "Ophthalmologist"
+    ];
+    const availabilities = ["Today", "Tomorrow", "Wed", "Thu"];
+    let specialtyFilter = null;
+    let availabilityFilter = null;
+    for (const s of specialties) {
+      if (q.toLowerCase().includes(s.toLowerCase())) {
+        specialtyFilter = s;
+        break;
+      }
+    }
+    for (const a of availabilities) {
+      if (q.toLowerCase().includes(a.toLowerCase())) {
+        availabilityFilter = a;
+        break;
+      }
+    }
+
     const { rows } = await pool.query(
       `SELECT
          d.id, d.name, d.specialty, d.location, d.rating, d.reviews,
@@ -38,10 +59,19 @@ router.get("/", async (req, res) => {
        WHERE d.search_embedding IS NOT NULL
        GROUP BY d.id, d.search_embedding
        ORDER BY d.search_embedding <=> embedding('text-embedding-005', $1)::vector
-       LIMIT 10`,
+       LIMIT 20`,
       [q]
     );
-    res.json(rows);
+    // Post-filter for specialty/availability if present in query
+    let filtered = rows;
+    if (specialtyFilter) {
+      filtered = filtered.filter((d) => d.specialty === specialtyFilter);
+    }
+    if (availabilityFilter) {
+      filtered = filtered.filter((d) => d.available === availabilityFilter);
+    }
+    // Return top 10 after filtering
+    res.json(filtered.slice(0, 10));
   } catch (err: any) {
     res.status(500).json({ error: err?.message ?? String(err) });
   }

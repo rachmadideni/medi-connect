@@ -1,35 +1,34 @@
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { Star, MapPin, Clock, Sparkles, SlidersHorizontal, Search, X } from "lucide-react";
-import { MOCK_DOCTORS, type Doctor } from "../data/doctors";
-
-// TODO: replace MOCK_DOCTORS with real data from backend API
+import { apiFetch } from "../api/client";
+import type { Doctor } from "../data/doctors";
 
 const SPECIALTIES = ["All", "Cardiologist", "General Practice", "Dermatologist", "Pediatrician", "Neurologist", "Psychiatrist", "Orthopedic", "Ophthalmologist"];
 const AVAILABILITY = ["All", "Today", "Tomorrow"];
 
 type SearchMode = "filters" | "ai";
 
-// TODO: replace this with a real backend AI search API call
-async function mockAiSearch(query: string): Promise<Doctor[]> {
-  await new Promise((r) => setTimeout(r, 900)); // simulate network delay
-  const q = query.toLowerCase();
-  const keywords = q.split(/\s+/).filter((w) => w.length > 2);
 
-  return MOCK_DOCTORS.filter((d) => {
-    const haystack = [
-      d.name, d.specialty, d.location, d.bio,
-      d.available, d.education, ...d.languages,
-    ].join(" ").toLowerCase();
-    return keywords.some((kw) => haystack.includes(kw));
-  }).sort((a, b) => {
-    // rank by number of keyword hits
-    const hayA = [a.name, a.specialty, a.location, a.bio, ...a.languages].join(" ").toLowerCase();
-    const hayB = [b.name, b.specialty, b.location, b.bio, ...b.languages].join(" ").toLowerCase();
-    const scoreA = keywords.filter((kw) => hayA.includes(kw)).length;
-    const scoreB = keywords.filter((kw) => hayB.includes(kw)).length;
-    return scoreB - scoreA;
-  });
+// Fetch doctors from backend with optional filters
+async function fetchDoctors({ specialty, available, search }: { specialty?: string; available?: string; search?: string }) {
+  const params = new URLSearchParams();
+  if (specialty && specialty !== "All") params.append("specialty", specialty);
+  if (available && available !== "All") params.append("available", available);
+  // No backend search param for name/location, so filter client-side
+  const data: Doctor[] = await apiFetch(`/api/doctors?${params}`);
+  if (search) {
+    const s = search.toLowerCase();
+    return data.filter((d) => d.name.toLowerCase().includes(s) || d.location.toLowerCase().includes(s));
+  }
+  return data;
+}
+
+// AI search
+async function aiSearch(query: string): Promise<Doctor[]> {
+  const data: Doctor[] = await apiFetch(`/api/doctors/search?q=${encodeURIComponent(query)}`);
+  return data;
 }
 
 export default function Doctors() {
@@ -47,13 +46,21 @@ export default function Doctors() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState("");
 
-  const filteredResults = MOCK_DOCTORS.filter((d) => {
-    const matchSearch = d.name.toLowerCase().includes(search.toLowerCase()) ||
-      d.location.toLowerCase().includes(search.toLowerCase());
-    const matchSpecialty = specialty === "All" || d.specialty === specialty;
-    const matchAvail = availability === "All" || d.available === availability;
-    return matchSearch && matchSpecialty && matchAvail;
-  });
+
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Fetch doctors on filter change
+  useEffect(() => {
+    if (mode !== "filters") return;
+    setLoading(true);
+    setError("");
+    fetchDoctors({ specialty, available: availability, search })
+      .then(setDoctors)
+      .catch(() => setError("Failed to load doctors."))
+      .finally(() => setLoading(false));
+  }, [specialty, availability, search, mode]);
 
   async function handleAiSearch() {
     if (!aiQuery.trim()) return;
@@ -61,7 +68,7 @@ export default function Doctors() {
     setAiError("");
     setAiResults(null);
     try {
-      const results = await mockAiSearch(aiQuery); // TODO: replace with API call to /api/doctors/search?q=...
+      const results = await aiSearch(aiQuery);
       setAiResults(results);
     } catch {
       setAiError("Something went wrong. Please try again.");
@@ -76,8 +83,8 @@ export default function Doctors() {
     setAiError("");
   }
 
-  const displayedDoctors = mode === "ai" ? (aiResults ?? []) : filteredResults;
-  const showGrid = mode === "filters" || aiResults !== null;
+  const displayedDoctors = mode === "ai" ? (aiResults ?? []) : doctors;
+  const showGrid = (mode === "filters" && !loading) || aiResults !== null;
 
   return (
     <div className="py-8 space-y-6">
@@ -217,6 +224,25 @@ export default function Doctors() {
       )}
 
       {/* Loading skeleton */}
+      {(mode === "filters" && loading) && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3 animate-pulse">
+              <div className="flex gap-4 items-center">
+                <div className="w-12 h-12 rounded-full bg-gray-200" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-3/4" />
+                  <div className="h-3 bg-gray-100 rounded w-1/2" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="h-3 bg-gray-100 rounded" />
+                <div className="h-3 bg-gray-100 rounded w-2/3" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
       {mode === "ai" && aiLoading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -238,7 +264,7 @@ export default function Doctors() {
       )}
 
       {/* Results */}
-      {showGrid && !aiLoading && (
+      {showGrid && !aiLoading && !loading && (
         <>
           <p className="text-sm text-gray-400">
             {displayedDoctors.length} doctor{displayedDoctors.length !== 1 ? "s" : ""} found
@@ -260,7 +286,7 @@ export default function Doctors() {
                   {/* Avatar + Name */}
                   <div className="flex items-center gap-4">
                     <img
-                      src={doctor.image}
+                      src={doctor.image_url}
                       alt={doctor.name}
                       className="w-12 h-12 rounded-full object-cover shrink-0 border border-gray-100"
                     />

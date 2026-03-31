@@ -22,7 +22,7 @@ export type Doctor = {
   available: string;
   experience: number;
   avatar: string;
-  image: string;
+  image_url: string;
   bio: string;
   languages: string[];
   education: string;
