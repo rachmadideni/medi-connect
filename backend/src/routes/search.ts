@@ -58,7 +58,7 @@ router.get("/", async (req, res) => {
        LEFT JOIN doctor_slots s ON s.doctor_id = d.id AND s.is_available = true
        WHERE d.search_embedding IS NOT NULL
           AND ai.if(
-            prompt => 'Does this text: "' || d.bio || '" match the user request: "' || $1 || '", at least 70%? ',
+            prompt => 'Does this text: "' || d.name || '. ' || d.specialty || ' at ' || d.location || '. ' || d.bio || '. Languages: ' || array_to_string(d.languages, ', ') || '" match the user request: "' || $1 || '", at least 70%? ',
             model_id => 'gemini-3-flash-preview'
           )
           AND (1 - (d.search_embedding <=> embedding('text-embedding-005', $1)::vector)) > 0.5
