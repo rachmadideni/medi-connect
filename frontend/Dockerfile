@@ -1,8 +1,8 @@
-FROM node:18 AS build
+FROM node:20 AS build
 WORKDIR /app
 COPY package.json ./
-RUN npm install
-COPY . .           
+RUN npm install --include=optional
+COPY . .
 RUN npm run build
 
 FROM node:18-slim
