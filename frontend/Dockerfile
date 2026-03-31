@@ -1,11 +1,16 @@
 # Use official Node.js image to build and serve
+
+# Build stage
 FROM node:18 AS build
 WORKDIR /app
+COPY package*.json ./
+RUN npm ci
 COPY . .
-RUN npm install
 RUN npm run build
 
 # Production image
+
+# Production stage
 FROM node:18-slim
 WORKDIR /app
 RUN npm install -g serve
