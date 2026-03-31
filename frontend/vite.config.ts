@@ -1,15 +1,15 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type ConfigEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
-export default defineConfig({
+export default defineConfig(({ mode }: ConfigEnv) => ({
   plugins: [react(), tailwindcss()],
   server: {
-    proxy: {
+    proxy: mode === 'development' ? {
       '/api': {
         target: 'http://localhost:8080',
-        changeOrigin: true,
+        changeOrigin: true as const,
       },
-    },
+    } : undefined,
   },
-});
+}));
