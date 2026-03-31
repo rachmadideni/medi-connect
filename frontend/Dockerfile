@@ -1,7 +1,8 @@
 FROM node:20 AS build
 WORKDIR /app
 COPY package.json ./
-RUN npm install --include=optional
+RUN npm install --include=optional && \
+    npm install @tailwindcss/oxide-linux-x64-gnu --no-save
 COPY . .
 RUN npm run build
 
