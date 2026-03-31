@@ -1,19 +1,14 @@
-FROM node:20-alpine AS builder
-
+# Use official Node.js image to build and serve
+FROM node:18 AS build
 WORKDIR /app
-
-COPY package*.json ./
-COPY tsconfig.json ./
-COPY vite.config.ts ./
-
-RUN npm install
-
 COPY . .
-
+RUN npm install
 RUN npm run build
 
-# Serve with nginx
-FROM nginx:alpine
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Production image
+FROM node:18-slim
+WORKDIR /app
+RUN npm install -g serve
+COPY --from=build /app/dist ./dist
 EXPOSE 8080
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["serve", "-s", "dist", "-l", "8080"]
