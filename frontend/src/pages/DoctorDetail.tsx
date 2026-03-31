@@ -42,7 +42,7 @@ export default function DoctorDetail() {
       {/* Hero Card */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col sm:flex-row gap-6">
         <img
-          src={doctor.image}
+          src={doctor.image_url}
           alt={doctor.name}
           className="w-20 h-20 rounded-2xl object-cover shrink-0 border border-gray-100"
         />
